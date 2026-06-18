@@ -14,11 +14,13 @@ export interface LocationGateProps {
 // country/coords the backend needs for all-types coverage).
 const POPULAR: City[] = [
   { id: "pop:toronto", name: "Toronto", country: "Canada", count: 0, lat: 43.6532, lng: -79.3832 },
+  { id: "pop:mississauga", name: "Mississauga", country: "Canada", count: 0, lat: 43.589, lng: -79.6441 },
+  { id: "pop:hamilton", name: "Hamilton", country: "Canada", count: 0, lat: 43.2557, lng: -79.8711 },
   { id: "pop:nyc", name: "New York", country: "United States", count: 0, lat: 40.7128, lng: -74.006 },
-  { id: "pop:london", name: "London", country: "United Kingdom", count: 0, lat: 51.5074, lng: -0.1278 },
-  { id: "pop:berlin", name: "Berlin", country: "Germany", count: 0, lat: 52.52, lng: 13.405 },
-  { id: "pop:lisbon", name: "Lisbon", country: "Portugal", count: 0, lat: 38.7223, lng: -9.1393 },
-  { id: "pop:mexico", name: "Mexico City", country: "Mexico", count: 0, lat: 19.4326, lng: -99.1332 },
+  { id: "pop:boston", name: "Boston", country: "United States", count: 0, lat: 42.3601, lng: -71.0589 },
+  { id: "pop:philadelphia", name: "Philadelphia", country: "United States", count: 0, lat: 39.9526, lng: -75.1652 },
+  { id: "pop:miami", name: "Miami", country: "United States", count: 0, lat: 25.7617, lng: -80.1918 },
+  { id: "pop:atlanta", name: "Atlanta", country: "United States", count: 0, lat: 33.749, lng: -84.388 },
 ];
 
 /**

@@ -16,6 +16,26 @@ CENTROIDS: dict[str, tuple[float, float]] = {
     "New York": (40.7128, -74.006),
     "Mexico City": (19.4326, -99.1332),
     "Berkeley": (37.8719, -122.2585),
+    # GTA (Greater Toronto Area)
+    "Toronto": (43.6532, -79.3832),
+    "Mississauga": (43.589, -79.6441),
+    "Brampton": (43.7315, -79.7624),
+    "Hamilton": (43.2557, -79.8711),
+    "Markham": (43.8561, -79.337),
+    "Vaughan": (43.8361, -79.4983),
+    "Oakville": (43.4675, -79.6877),
+    "Richmond Hill": (43.8828, -79.4403),
+    "Burlington": (43.3255, -79.799),
+    # Eastern US
+    "Brooklyn": (40.6782, -73.9442),
+    "Newark": (40.7357, -74.1724),
+    "Jersey City": (40.7178, -74.0431),
+    "Boston": (42.3601, -71.0589),
+    "Philadelphia": (39.9526, -75.1652),
+    "Washington": (38.9072, -77.0369),
+    "Atlanta": (33.749, -84.388),
+    "Miami": (25.7617, -80.1918),
+    "Baltimore": (39.2904, -76.6122),
 }
 
 _cache: dict[str, tuple[float, float]] = {}
