@@ -93,6 +93,44 @@ def ingest(
     return counts
 
 
+def ingest_query(
+    session: Session, city: str, query: str, country: str = "",
+    lat: float | None = None, lng: float | None = None,
+) -> int:
+    """Adaptive deep search: pull Eventbrite's keyword results for this city+query
+    into raw_events. Caller runs cleanup() to promote them. Returns rows written."""
+    if not country:
+        from ..models import City as _City
+        row = session.get(_City, city)
+        country = (row.country if row else "") or ""
+    from ..feeds import eventbrite_query_feed
+    from ..sources import _build_city_adapter
+
+    d = eventbrite_query_feed(city, country, query, lat or 0.0, lng or 0.0)
+    if d is None:
+        return 0
+    src = _build_city_adapter(d)
+    if src is None:
+        return 0
+    row = session.exec(select(SourceRow).where(SourceRow.name == src.name)).first()
+    if row is None:
+        row = SourceRow(type=src.type, name=src.name, city=city, base_url=getattr(src, "base_url", ""), enabled=True)
+        session.add(row)
+        session.commit()
+        session.refresh(row)
+    try:
+        payloads = src.fetch(city, 30, lat, lng)
+    except Exception:
+        payloads = []
+    payloads = payloads[: getattr(src, "max_results", 200)]
+    for p in payloads:
+        session.add(RawEvent(source_id=row.id, raw_url=p.raw_url, raw_payload=p.payload, parse_status="pending"))
+    row.last_crawled_at = utcnow()
+    session.add(row)
+    session.commit()
+    return len(payloads)
+
+
 def _profile(session: Session, device_id: str = "me") -> UserProfile:
     """Get-or-create the profile for an anonymous device. Defaults to the shared
     'me' row (used by the pipeline's neutral base ranking and header-less calls)."""

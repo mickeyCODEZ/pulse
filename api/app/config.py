@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     cron_secret: str = ""  # if set, /cron/* requires Vercel's "Bearer <CRON_SECRET>" header
     event_retention_days: int = 30  # expired events older than this are pruned by the cron
     refresh_min_interval_s: int = 600  # min seconds between on-demand refreshes of a city
+    search_min_interval_s: int = 600  # min seconds between deep-search scrapes of a city+query
     sentry_dsn: str = ""  # blank → Sentry disabled (local dev)
     ics_feeds: str = ""  # comma-separated public .ics URLs
     ticketmaster_api_key: str = ""

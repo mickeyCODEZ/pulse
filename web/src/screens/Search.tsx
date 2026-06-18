@@ -9,8 +9,10 @@ import { DatePicker } from "../components/forms/DatePicker";
 import { Calendar, Pin, Music, Palette, Film, Utensils, Mic, Ticket, Navigation } from "../icons";
 import { Eyebrow } from "../shell/Eyebrow";
 import { searchCities } from "../geo";
+import { api } from "../api";
 
-const RECENT = ["Jazz tonight", "Free this weekend", "Risograph", "Talks"];
+// Topical one-tap searches (each runs the adaptive deep search).
+const POPULAR_SEARCHES = ["FIFA", "World Cup", "Watch party", "Live music", "Comedy", "Food"];
 const CATS = [
   { label: "Live music", icon: <Music size={18} /> },
   { label: "Art", icon: <Palette size={18} /> },
@@ -45,7 +47,35 @@ export function SearchScreen({ events, saved, onSave, onDismiss, onOpen, city, c
   const [cal, setCal] = useState(false);
   const [cityMatches, setCityMatches] = useState<City[]>([]);
   const cityReq = useRef(0);
+  const [deepResults, setDeepResults] = useState<PulseEvent[]>([]);
+  const [deepLoading, setDeepLoading] = useState(false);
+  const deepReq = useRef(0);
   const query = q.trim().toLowerCase();
+
+  // Adaptive deep search: as you type a keyword, ask the backend to pull live
+  // matches from the web (e.g. FIFA watch parties) for THIS city, on top of the
+  // events already loaded. Debounced; results merge with the local filter below.
+  useEffect(() => {
+    const term = q.trim();
+    if (term.length < 2) {
+      setDeepResults([]);
+      setDeepLoading(false);
+      return;
+    }
+    const id = ++deepReq.current;
+    setDeepLoading(true);
+    const t = setTimeout(async () => {
+      try {
+        const r = await api.search(term, city.name, city.lat, city.lng, city.country);
+        if (id === deepReq.current) setDeepResults(r.events || []);
+      } catch {
+        if (id === deepReq.current) setDeepResults([]);
+      } finally {
+        if (id === deepReq.current) setDeepLoading(false);
+      }
+    }, 450);
+    return () => clearTimeout(t);
+  }, [q, city.name, city.lat, city.lng, city.country]);
 
   // The same bar also finds places: as you type, surface cities to switch to
   // (worldwide via Open-Meteo, seeded matches first). So one bar = place + keyword.
@@ -87,7 +117,13 @@ export function SearchScreen({ events, saved, onSave, onDismiss, onOpen, city, c
     parseFloat(e.distance || "99") <= distChips.find((c) => c.key === distF)!.max;
 
   const hasFilter = !!query || dateF !== "any" || distF !== "any";
-  const results = events.filter((e) => matchText(e) && matchDate(e) && matchDist(e));
+  // Local instant matches + adaptive deep-search matches (web), deduped by id.
+  // Deep results already match the keyword, so they only get the date/distance chips.
+  const localResults = events.filter((e) => matchText(e) && matchDate(e) && matchDist(e));
+  const deepFiltered = query ? deepResults.filter((e) => matchDate(e) && matchDist(e)) : [];
+  const byId = new Map<string, PulseEvent>();
+  for (const e of [...localResults, ...deepFiltered]) byId.set(e.id, e);
+  const results = [...byId.values()];
 
   const dateChips: { key: "any" | "today" | "weekend"; label: string }[] = [
     { key: "any", label: "Any day" },
@@ -179,10 +215,10 @@ export function SearchScreen({ events, saved, onSave, onDismiss, onOpen, city, c
 
       {!hasFilter && (
         <>
-          <Eyebrow style={{ marginBottom: "var(--space-3)" }}>Recent</Eyebrow>
+          <Eyebrow style={{ marginBottom: "var(--space-3)" }}>Popular searches</Eyebrow>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "var(--space-7)" }}>
-            {RECENT.map((r) => (
-              <FilterChip key={r} onClick={() => setQ(r.split(" ")[0])}>
+            {POPULAR_SEARCHES.map((r) => (
+              <FilterChip key={r} onClick={() => setQ(r)}>
                 {r}
               </FilterChip>
             ))}
@@ -226,6 +262,14 @@ export function SearchScreen({ events, saved, onSave, onDismiss, onOpen, city, c
         </>
       )}
 
+      {query && deepLoading && (
+        <div role="status" aria-live="polite" style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", color: "var(--text-muted)", fontSize: "var(--fs-sm)", marginBottom: "var(--space-4)" }}>
+          <span aria-hidden="true" style={{ width: 14, height: 14, border: "2px solid var(--border-strong)", borderTopColor: "var(--accent)", borderRadius: "50%", display: "inline-block", animation: "pulse-spin 0.7s linear infinite" }} />
+          Searching {city.name} for “{q}”…
+          <style>{"@keyframes pulse-spin{to{transform:rotate(360deg)}}"}</style>
+        </div>
+      )}
+
       {hasFilter && results.length > 0 && (
         <>
           <Eyebrow style={{ marginBottom: "var(--space-3)" }}>
@@ -242,7 +286,7 @@ export function SearchScreen({ events, saved, onSave, onDismiss, onOpen, city, c
         </>
       )}
 
-      {hasFilter && results.length === 0 && (
+      {hasFilter && results.length === 0 && !deepLoading && (
         <EmptyState
           glyph="search"
           title="Nothing matches yet"

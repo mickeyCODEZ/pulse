@@ -93,6 +93,24 @@ def eventbrite_feeds_for_city(city: str, country: str, lat: float = 0.0, lng: fl
     ]
 
 
+def eventbrite_query_feed(city: str, country: str, query: str, lat: float = 0.0, lng: float = 0.0) -> Optional[SourceDef]:
+    """Adaptive deep search: Eventbrite's keyword-results page for a free-text
+    query in a city (e.g. /d/canada--toronto/fifa/). Same JSON-LD listing shape,
+    so it flows through the normal pipeline. None if the slug can't be built."""
+    cslug = _slug(city)
+    ctyslug = _COUNTRY_ALIAS.get((country or "").lower().strip(), _slug(country))
+    qslug = _slug(query)
+    if not cslug or not ctyslug or not qslug:
+        return None
+    return SourceDef(
+        type="jsonld", kind="listing",
+        name=f"Eventbrite q:{qslug} ({city})", city=city,
+        lat=lat, lng=lng, country=country,
+        base_url=f"https://www.eventbrite.com/d/{ctyslug}--{cslug}/{qslug}/",
+        popularity=0.5, category="",
+    )
+
+
 CURATED: list[SourceDef] = [
     # --- Global example (verified working .ics, LiveWhale) -----------------
     # Non-Eventbrite curated feeds live here. All-types Eventbrite coverage is

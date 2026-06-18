@@ -25,7 +25,8 @@ if settings.sentry_dsn:  # error tracking in prod; no-op locally when unset
 from .pipeline.geocode import CENTROIDS
 from .pipeline.rank import COMMUNITY_CATEGORIES
 from .pipeline.expire import prune_expired
-from .pipeline.run import _profile, cleanup, ingest, refresh_city
+from .pipeline.run import _profile, cleanup, ingest, ingest_query, refresh_city
+from .pipeline.rank import rank as _rank
 from .schemas import event_card
 from .cities_seed import seed_cities
 
@@ -201,6 +202,74 @@ def feed(
         "city": city,
         "total": len(kept),
         "events": [event_card(ev, profile, origin) for ev in page],
+    }
+
+
+# Per-(city, query) deep-search throttle (warm-instance; avoids re-scraping).
+_SEARCH_TS: dict[str, datetime] = {}
+
+
+@app.get("/search", dependencies=[Depends(require_token)])
+def search(
+    session: Session = Depends(get_session),
+    device: str = Depends(get_device_id),
+    q: Optional[str] = None,
+    city: Optional[str] = None,
+    lat: Optional[float] = None,
+    lng: Optional[float] = None,
+    country: Optional[str] = None,
+    limit: int = 50,
+) -> dict[str, Any]:
+    """Adaptive deep search: pull Eventbrite's live keyword results for q in this
+    city (e.g. FIFA watch parties), fold them through the pipeline, then return
+    real, upcoming, per-device-ranked matches. Throttled per (city, q)."""
+    profile = _profile(session, device)
+    city = city or profile.home_base_city
+    query = (q or "").strip()
+    if len(query) < 2:
+        return {"city": city, "q": query, "total": 0, "events": []}
+
+    # Deep-ingest the keyword page (cached per city+q to avoid re-scraping).
+    key = f"{city}|{query}".lower()
+    now = datetime.now(timezone.utc)
+    last = _SEARCH_TS.get(key)
+    if last is None or (now - last).total_seconds() > settings.search_min_interval_s:
+        try:
+            ingest_query(session, city, query, country=country or "", lat=lat, lng=lng)
+            cleanup(session)
+            _SEARCH_TS[key] = now
+        except Exception:
+            pass  # fall back to whatever's already indexed
+
+    origin = (lat, lng) if lat is not None and lng is not None else _origin(city, profile)
+    grace = timedelta(hours=6)
+    tokens = [t for t in query.lower().split() if t]
+
+    rows = session.exec(select(Event).where(Event.status == "active", Event.city == city)).all()
+    matches = []
+    for ev in rows:
+        if ev.is_synthetic:
+            continue
+        if ev.start_utc is not None:
+            start = ev.start_utc if ev.start_utc.tzinfo else ev.start_utc.replace(tzinfo=timezone.utc)
+            if start < now - grace:
+                continue
+        hay = f"{ev.title} {ev.category} {ev.venue_name} {ev.description}".lower()
+        if not all(t in hay for t in tokens):
+            continue
+        c = {"category": ev.category, "is_free": ev.is_free, "price_min": ev.price_min,
+             "gem": ev.is_gem, "start_utc": ev.start_utc, "popularity_signal": ev.popularity_signal}
+        _rank(c, profile)
+        ev.relevance_score = c["relevance_score"]
+        ev.relevance_reasons = c["relevance_reasons"]
+        matches.append(ev)
+
+    matches.sort(key=lambda e: (e.relevance_score, e.start_utc or datetime.max.replace(tzinfo=timezone.utc)), reverse=True)
+    return {
+        "city": city,
+        "q": query,
+        "total": len(matches),
+        "events": [event_card(ev, profile, origin) for ev in matches[:limit]],
     }
 
 

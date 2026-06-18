@@ -96,6 +96,15 @@ export const api = {
     return req("/saved");
   },
 
+  // Adaptive deep search: live keyword results for q in a city (FIFA, watch
+  // parties, anything) — backend scrapes + ingests Eventbrite on demand.
+  async search(q: string, city: string, lat?: number, lng?: number, country?: string): Promise<{ q: string; total: number; events: PulseEvent[] }> {
+    const p = new URLSearchParams({ q, city });
+    if (lat != null && lng != null) { p.set("lat", String(lat)); p.set("lng", String(lng)); }
+    if (country) p.set("country", country);
+    return req(`/search?${p.toString()}`);
+  },
+
   async digest(city?: string): Promise<{ title: string; events: PulseEvent[] }> {
     return req(`/digest${city ? `?city=${encodeURIComponent(city)}` : ""}`);
   },
