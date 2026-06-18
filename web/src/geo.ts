@@ -29,8 +29,11 @@ export async function detectLocation(): Promise<DetectedLocation | null> {
   let city = "Your area";
   let country = "";
   try {
+    // BigDataCloud's free, no-key, CORS-enabled client reverse-geocoder. Use the
+    // api-bdc.io domain directly — the old api.bigdatacloud.net host now 307-
+    // redirects here, and a cross-origin redirect breaks the browser CORS fetch.
     const r = await fetch(
-      `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`,
+      `https://api-bdc.io/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`,
     );
     const j = await r.json();
     city = j.city || j.locality || j.principalSubdivision || city;
