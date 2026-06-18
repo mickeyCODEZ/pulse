@@ -1,0 +1,12 @@
+{
+  "name": "Pulse — your city, ranked for you",
+  "short_name": "Pulse",
+  "description": "Every event in whatever city you're in, in one ranked feed built for you.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#E8E0CE",
+  "theme_color": "#E8E0CE",
+  "icons": [
+    { "src": "/assets/pulse-mark.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

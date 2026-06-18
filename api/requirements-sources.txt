@@ -1,0 +1,9 @@
+# Full local stack: the stateful app (app/main.py) + all source adapters.
+# Install for local dev:  pip install -r requirements-sources.txt
+-r requirements.txt
+uvicorn[standard]>=0.32
+icalendar>=6.0        # .ics feeds
+feedparser>=6.0       # RSS
+extruct>=0.17         # schema.org/Event JSON-LD scraping
+selectolax>=0.3       # og:image enrich
+psycopg[binary]>=3.2  # optional Postgres host (DATABASE_URL=postgresql+psycopg://...)

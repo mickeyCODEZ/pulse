@@ -1,0 +1,43 @@
+<!-- @dsCard group="Components" viewport="780x520" name="Event card · feed + hidden gem" subtitle="The key component — ranked, image-forward, shows why it surfaced" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>
+  body { margin:0; background:var(--surface-page); padding:22px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const NS = window.PulseDesignSystem_3c2543;
+const { EventCard } = NS;
+function Demo(){
+  const [s1,setS1]=React.useState(true);
+  const [s2,setS2]=React.useState(false);
+  return (
+    <div className="grid">
+      <EventCard saved={s1} onSave={()=>setS1(!s1)} event={{
+        category:"Live music", title:"Warehouse jazz, after hours", date:"Fri · 9pm", venue:"The Lot", distance:"0.4mi",
+        price:12, freshness:"added 2h ago", relevance:["live music","under $15","near you"], score:94,
+        sources:["Resident Advisor","DICE"]
+      }}/>
+      <EventCard saved={s2} onSave={()=>setS2(!s2)} event={{
+        gem:true, category:"Talk", title:"A short history of the city's bridges", date:"Sun · 2pm", venue:"Carnegie Library", distance:"1.1mi",
+        free:true, freshness:"added 6h ago", relevance:["history","free","rarely listed"], score:88,
+        sources:["City Library"]
+      }}/>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<Demo/>);
+</script>
+</body>
+</html>

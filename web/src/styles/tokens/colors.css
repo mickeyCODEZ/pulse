@@ -1,0 +1,129 @@
+/* ============================================================
+   PULSE · COLOR SYSTEM — "1920s Press" edition
+   Ink on newsprint. Two editions share one semantic API:
+   - Default / [data-theme="light"]  = "Morning Edition" (newsprint + ink)
+   - [data-theme="dark"]             = "Night Edition" (press black + bone)
+   Primary action stays monochrome (ink/bone). A single restrained
+   PRESS-RED spot (brass at night) carries flourishes — relevance, the
+   masthead rule, "Extra!" moments. Used sparingly, like a second ink.
+   ============================================================ */
+
+:root {
+  /* ---- Base palette · Morning Edition (newsprint) ---- */
+  --warm-paper:    #E8E0CE;  /* newsprint page                   */
+  --warm-paper-2:  #DCD2BC;  /* sunken / pressed wells           */
+  --warm-card:     #F2ECDC;  /* fresh sheet — card surface       */
+  --warm-card-2:   #E4DBC6;  /* secondary surface / hover        */
+  --warm-ink:      #181410;  /* press black, warm                */
+  --warm-ink-2:    #3C3428;  /* body text                        */
+  --warm-ink-3:    #6A6049;  /* muted text                       */
+  --warm-ink-4:    #968A6E;  /* faint text / rules               */
+
+  /* ---- Base palette · Night Edition (press black) ---- */
+  --dark-bg:       #14110C;  /* press black page                 */
+  --dark-bg-2:     #0C0A07;  /* sunken / under-cards             */
+  --dark-card:     #1E1A13;  /* card surface                     */
+  --dark-card-2:   #29231A;  /* secondary surface / hover        */
+  --dark-fg:       #EEE6D2;  /* bone / aged paper-white          */
+  --dark-fg-2:     #B7AD93;  /* body text                        */
+  --dark-fg-3:     #837A63;  /* muted text                       */
+  --dark-fg-4:     #595139;  /* faint text                       */
+
+  /* ---- Spot inks ---- */
+  --press-red:     #9E2B23;  /* oxblood / vermilion press red    */
+  --press-red-dk:  #B14A3F;  /* lifted red for dark ground       */
+  --brass:         #C7A24A;  /* night-edition warm metal         */
+
+  /* ---- Absolutes ---- */
+  --white: #FFFFFF;
+  --black: #0B0805;
+}
+
+/* ===================== SEMANTIC · MORNING EDITION ===================== */
+:root,
+[data-theme="light"] {
+  --surface-page:    var(--warm-paper);
+  --surface-sunken:  var(--warm-paper-2);
+  --surface-card:    var(--warm-card);
+  --surface-raised:  var(--warm-card-2);
+  --surface-inverse: var(--warm-ink);
+
+  --text-strong:   var(--warm-ink);
+  --text-body:     var(--warm-ink-2);
+  --text-muted:    var(--warm-ink-3);
+  --text-faint:    var(--warm-ink-4);
+  --text-inverse:  var(--warm-paper);
+
+  --border:        rgba(24, 20, 16, 0.16);
+  --border-strong: rgba(24, 20, 16, 0.42);
+  --border-faint:  rgba(24, 20, 16, 0.08);
+
+  /* Monochrome primary = ink filled, paper text */
+  --accent:        var(--warm-ink);
+  --accent-fg:     var(--warm-paper);
+  --accent-soft:   rgba(24, 20, 16, 0.06);
+
+  /* Press-red spot */
+  --spot:          var(--press-red);
+  --spot-fg:       #F6EEDD;
+  --spot-soft:     rgba(158, 43, 35, 0.10);
+
+  /* Line-map motif strokes */
+  --map-line:        rgba(24, 20, 16, 0.32);
+  --map-line-soft:   rgba(24, 20, 16, 0.15);
+  --map-line-faint:  rgba(24, 20, 16, 0.07);
+
+  /* Placeholder-image duotone (rotogravure plates) */
+  --img-a: #211C16;
+  --img-b: #6A6049;
+
+  --scrim:   rgba(24, 20, 16, 0.58);
+  --scrim-0: rgba(24, 20, 16, 0.00);
+
+  --ok:    #3A6B47;
+  --warn:  #8A6A1E;
+  --error: var(--press-red);
+  color-scheme: light;
+}
+
+/* ===================== SEMANTIC · NIGHT EDITION ====================== */
+[data-theme="dark"] {
+  --surface-page:    var(--dark-bg);
+  --surface-sunken:  var(--dark-bg-2);
+  --surface-card:    var(--dark-card);
+  --surface-raised:  var(--dark-card-2);
+  --surface-inverse: var(--dark-fg);
+
+  --text-strong:   var(--dark-fg);
+  --text-body:     var(--dark-fg-2);
+  --text-muted:    var(--dark-fg-3);
+  --text-faint:    var(--dark-fg-4);
+  --text-inverse:  var(--dark-bg);
+
+  --border:        rgba(238, 230, 210, 0.14);
+  --border-strong: rgba(238, 230, 210, 0.34);
+  --border-faint:  rgba(238, 230, 210, 0.07);
+
+  --accent:        var(--dark-fg);
+  --accent-fg:     var(--dark-bg);
+  --accent-soft:   rgba(238, 230, 210, 0.08);
+
+  --spot:          var(--brass);
+  --spot-fg:       #14110C;
+  --spot-soft:     rgba(199, 162, 74, 0.12);
+
+  --map-line:        rgba(238, 230, 210, 0.26);
+  --map-line-soft:   rgba(238, 230, 210, 0.12);
+  --map-line-faint:  rgba(238, 230, 210, 0.05);
+
+  --img-a: #0A0805;
+  --img-b: #3E3729;
+
+  --scrim:   rgba(0, 0, 0, 0.64);
+  --scrim-0: rgba(0, 0, 0, 0.00);
+
+  --ok:    #74B083;
+  --warn:  #D6B25E;
+  --error: var(--press-red-dk);
+  color-scheme: dark;
+}

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Event feed" description="Pulse 'for you' ranked feed — header, filter chips, and EventCards (incl. a Hidden gem)." -->
+<helmet>
+  <script src="./ds-base.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+</helmet>
+<div style="min-height:100%;background:var(--surface-page);padding:28px 0 64px;">
+  <div style="max-width:440px;margin:0 auto;padding:0 16px;">
+    <div style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">Lisbon · Today</div>
+    <h1 style="font-family:var(--font-display);font-size:42px;line-height:1.04;letter-spacing:-0.02em;color:var(--text-strong);margin:0 0 8px;">For you, tonight</h1>
+    <p style="font-size:17px;color:var(--text-muted);margin:0 0 20px;">Everything in the city — ranked, not pre-filtered.</p>
+
+    <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:20px;">
+      <x-import component-from-global-scope="PulseDesignSystem_3c2543.FilterChip" active="{{ true }}" hint-size="auto,36px">This weekend</x-import>
+      <x-import component-from-global-scope="PulseDesignSystem_3c2543.FilterChip" hint-size="auto,36px">Free</x-import>
+      <x-import component-from-global-scope="PulseDesignSystem_3c2543.FilterChip" hint-size="auto,36px">Near me</x-import>
+      <x-import component-from-global-scope="PulseDesignSystem_3c2543.FilterChip" hint-size="auto,36px">Live music</x-import>
+    </div>
+
+    <sc-for list="{{ events }}" as="ev" hint-placeholder-count="3">
+      <div style="margin-bottom:20px;">
+        <x-import component-from-global-scope="PulseDesignSystem_3c2543.EventCard" event="{{ ev }}" hint-size="100%,440px"></x-import>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      events: [
+        { category: "Live music", title: "Warehouse jazz, after hours", date: "Fri · 9:00pm",
+          venue: "The Lot", distance: "0.4mi", price: 12, freshness: "added 2h ago", score: 94,
+          relevance: ["live music", "under $15", "near you"], sources: ["Resident Advisor", "DICE"] },
+        { gem: true, category: "Talk", title: "A short history of the city's bridges", date: "Sun · 2:00pm",
+          venue: "Carnegie Library", distance: "1.1mi", free: true, freshness: "added 6h ago", score: 88,
+          relevance: ["history", "free", "rarely listed"], sources: ["City Library"] },
+        { category: "Film", title: "Late screening: noir double bill", date: "Fri · 10:30pm",
+          venue: "Roxy Cinema", distance: "1.4mi", price: 14, freshness: "added 5h ago", score: 86,
+          relevance: ["film", "under $15", "tonight"], sources: ["Songkick"] },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,210 @@
+/* ============================================================
+   PULSE · APP-LEVEL — responsive web shell helpers
+   Layout rules for the real responsive app (mobile-first, excellent
+   on desktop). The design tokens & motif live in the imported files.
+   ============================================================ */
+
+html, body, #root { height: 100%; }
+#root { isolation: isolate; }
+
+/* Hide scrollbars on horizontally-scrolling chip rails / rails */
+.pulse-noscroll { scrollbar-width: none; -ms-overflow-style: none; }
+.pulse-noscroll::-webkit-scrollbar { display: none; }
+
+/* Soft vertical scrollbars in scrolling panels */
+.pulse-scroll { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+.pulse-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+.pulse-scroll::-webkit-scrollbar-thumb {
+  background: var(--border-strong); border-radius: 999px;
+  border: 3px solid var(--surface-page); background-clip: padding-box;
+}
+.pulse-scroll::-webkit-scrollbar-track { background: transparent; }
+
+/* ---- App shell layout -------------------------------------------------- */
+
+.pulse-app {
+  min-height: 100dvh;
+  display: flex;
+  background: var(--surface-page);
+  color: var(--text-body);
+}
+
+/* Desktop 3-zone: sidebar | feed | (optional) map panel */
+.pulse-sidebar {
+  width: var(--sidebar-w);
+  flex: 0 0 auto;
+  border-right: 1px solid var(--border);
+  padding: var(--space-5) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  background: var(--surface-page);
+}
+
+.pulse-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.pulse-mappanel {
+  width: var(--map-panel-w);
+  flex: 0 0 auto;
+  border-left: 1px solid var(--border);
+  background: var(--surface-sunken);
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Mobile chrome */
+.pulse-bottomnav-wrap {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+}
+
+/* Sticky top header on mobile sits above the feed */
+.pulse-mobile-shell {
+  width: 100%;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Fade-in for routed screens */
+@keyframes pulse-fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.pulse-screen-enter { animation: pulse-fade-up var(--dur-3) var(--ease-out); }
+@media (prefers-reduced-motion: reduce) { .pulse-screen-enter { animation: none; } }
+
+/* Reading-link underline for inline anchors */
+.pulse-link { color: var(--spot); border-bottom: 1px solid color-mix(in srgb, var(--spot) 40%, transparent); }
+
+/* ---- Leaflet map, themed to the editorial look ------------------------- */
+.pulse-map { width: 100%; height: 100%; background: var(--surface-sunken); }
+/* warm the light tiles toward the cream palette; dark stays as-is */
+.pulse-map .leaflet-tile-pane { filter: grayscale(0.25) contrast(0.92) brightness(1.02) sepia(0.06); }
+[data-theme="dark"] .pulse-map .leaflet-tile-pane { filter: grayscale(0.3) contrast(1.05) brightness(0.9); }
+.pulse-map .leaflet-control-attribution {
+  background: color-mix(in srgb, var(--surface-card) 80%, transparent);
+  color: var(--text-faint); font-family: var(--font-mono); font-size: 9px;
+}
+.pulse-map .leaflet-control-attribution a { color: var(--text-muted); }
+.pulse-map .leaflet-bar a { background: var(--surface-card); color: var(--text-strong); border-color: var(--border); }
+
+/* event pin — the brand price/Free/gem pill. The marker icon is sized to the
+   pill (see pinIconSize) so the whole thing is a real click target. */
+.pulse-pin-icon { display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.pulse-pin {
+  display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
+  padding: 3px 9px; border-radius: var(--radius-pill);
+  background: var(--surface-card); color: var(--text-strong);
+  border: 1px solid var(--border-strong); box-shadow: var(--shadow-1);
+  font-family: var(--font-mono); font-weight: var(--fw-semibold); font-size: 11px;
+  transition: transform var(--dur-2) var(--ease-out), box-shadow var(--dur-2);
+  cursor: pointer;
+}
+.pulse-pin-icon:hover .pulse-pin { transform: scale(1.08); box-shadow: var(--shadow-2); }
+.pulse-pin svg { width: 10px; height: 10px; }
+.pulse-pin.sel { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); box-shadow: var(--shadow-3); transform: scale(1.12); z-index: 1000; }
+.pulse-pin.gem { border-color: var(--spot); color: var(--spot); }
+.pulse-pin.gem.sel { color: var(--accent-fg); }
+
+/* hover tooltip preview */
+.pulse-tip.leaflet-tooltip {
+  background: var(--surface-card); color: var(--text-body);
+  border: 1px solid var(--border-strong); border-radius: var(--radius-md);
+  box-shadow: var(--shadow-3); padding: var(--space-2) var(--space-3); max-width: 240px;
+}
+.pulse-tip.leaflet-tooltip::before { border-top-color: var(--border-strong); }
+.pulse-tip-title { font-family: var(--font-display); font-size: var(--fs-subtitle); color: var(--text-strong); line-height: var(--lh-snug); }
+.pulse-tip-meta { font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-muted); margin-top: 2px; }
+.pulse-tip-cta { font-family: var(--font-condensed); font-weight: var(--fw-semibold); text-transform: uppercase; letter-spacing: 0.06em; font-size: var(--fs-2xs); color: var(--spot); margin-top: 4px; }
+
+/* drag-to-resize handle on the desktop map rail */
+.pulse-map-resizer {
+  position: absolute; left: -4px; top: 0; width: 9px; height: 100%; z-index: 600;
+  cursor: col-resize; touch-action: none;
+}
+.pulse-map-resizer::after {
+  content: ""; position: absolute; left: 3px; top: 0; width: 2px; height: 100%;
+  background: transparent; transition: background var(--dur-2);
+}
+.pulse-map-resizer:hover::after, .pulse-map-resizer.drag::after { background: var(--spot); }
+
+/* cluster bubble */
+.pulse-cluster {
+  display: flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: var(--radius-pill);
+  background: var(--accent); color: var(--accent-fg);
+  border: 2px solid var(--surface-card); box-shadow: var(--shadow-2);
+  font-family: var(--font-mono); font-weight: var(--fw-bold); font-size: 13px;
+}
+
+/* popup card (shown on pin click) */
+.pulse-map .leaflet-popup-content-wrapper { background: var(--surface-card); color: var(--text-body); border-radius: var(--radius-lg); box-shadow: var(--shadow-3); overflow: hidden; }
+.pulse-map .leaflet-popup-tip { background: var(--surface-card); }
+.pulse-map .leaflet-popup-content { margin: 0; font-family: var(--font-sans); width: auto !important; }
+.pulse-pop-img { height: 96px; background-size: cover; background-position: center; background-color: var(--surface-sunken); }
+.pulse-pop-body { padding: var(--space-3); }
+.pulse-pop-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+.pulse-pop-tag {
+  font-family: var(--font-condensed); font-weight: var(--fw-semibold); text-transform: uppercase;
+  letter-spacing: 0.05em; font-size: var(--fs-2xs); padding: 2px 7px; border-radius: var(--radius-pill);
+  background: var(--surface-sunken); color: var(--text-muted); border: 1px solid var(--border);
+}
+.pulse-pop-title { font-family: var(--font-display); font-size: var(--fs-subtitle); color: var(--text-strong); line-height: var(--lh-snug); margin: 0 0 4px; }
+.pulse-pop-meta { font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-muted); margin-bottom: 10px; }
+.pulse-pop-btn {
+  display: block; width: 100%; text-align: center; font-family: var(--font-condensed); font-weight: var(--fw-semibold);
+  text-transform: uppercase; letter-spacing: 0.06em; font-size: var(--fs-xs);
+  background: var(--accent); color: var(--accent-fg); border: none; border-radius: var(--radius-pill);
+  padding: 8px 14px; cursor: pointer; transition: filter var(--dur-2);
+}
+.pulse-pop-btn:hover { filter: brightness(1.08); }
+/* "near me" radius ring + you-are-here */
+.pulse-here { width: 14px; height: 14px; border-radius: 50%; background: var(--spot); border: 3px solid var(--surface-card); box-shadow: var(--shadow-2); transform: translate(-50%, -50%); }
+/* recenter / fullscreen controls */
+.pulse-map-btn {
+  position: absolute; z-index: 500; display: inline-flex; align-items: center; gap: 6px;
+  background: color-mix(in srgb, var(--surface-card) 92%, transparent); backdrop-filter: blur(var(--blur-sm));
+  border: 1px solid var(--border-strong); border-radius: var(--radius-pill);
+  padding: 7px 12px; cursor: pointer; color: var(--text-strong);
+  font-family: var(--font-condensed); font-weight: var(--fw-semibold); text-transform: uppercase;
+  letter-spacing: 0.05em; font-size: var(--fs-xs); box-shadow: var(--shadow-2);
+}
+
+/* Real source photo, kept on-brand: the actual image, tinted by the duotone
+   gradient + the line-map texture so it reads as editorial monochrome rather
+   than a raw stock photo. Pass the url via the --photo custom property. */
+.img-photo {
+  background-color: var(--img-a);
+  background-image:
+    linear-gradient(150deg,
+      color-mix(in srgb, var(--img-a) 58%, transparent) 0%,
+      color-mix(in srgb, var(--img-b) 24%, transparent) 100%),
+    var(--map-bg),
+    var(--photo);
+  background-size: cover, 360px 360px, cover;
+  background-position: center, center, center;
+  background-repeat: no-repeat, repeat, no-repeat;
+  background-blend-mode: multiply, soft-light, normal;
+}
+[data-theme="dark"] .img-photo {
+  background-image:
+    linear-gradient(150deg,
+      color-mix(in srgb, var(--img-a) 70%, transparent) 0%,
+      color-mix(in srgb, var(--img-b) 30%, transparent) 100%),
+    var(--map-bg),
+    var(--photo);
+  background-blend-mode: multiply, screen, normal;
+}

@@ -1,0 +1,17 @@
+<!-- @dsCard group="Spacing" viewport="700x170" name="Elevation" subtitle="Hairline-first; soft shadows for lifts & overlays" -->
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body{margin:0;background:var(--surface-page);padding:26px;font-family:var(--font-sans);}
+  .row{display:flex;gap:26px;align-items:center;}
+  .item{display:flex;flex-direction:column;align-items:center;gap:10px;}
+  .box{width:90px;height:64px;background:var(--surface-card);border:1px solid var(--border);border-radius:var(--radius-md);}
+  .lab{font-family:var(--font-mono);font-size:10px;color:var(--text-muted);letter-spacing:0.02em;}
+</style></head><body>
+  <div class="row">
+    <div class="item"><div class="box" style="box-shadow:var(--shadow-1)"></div><span class="lab">shadow-1</span></div>
+    <div class="item"><div class="box" style="box-shadow:var(--shadow-2)"></div><span class="lab">shadow-2 · card</span></div>
+    <div class="item"><div class="box" style="box-shadow:var(--shadow-3)"></div><span class="lab">shadow-3 · hover</span></div>
+    <div class="item"><div class="box" style="box-shadow:var(--shadow-4)"></div><span class="lab">shadow-4 · sheet</span></div>
+  </div>
+</body></html>

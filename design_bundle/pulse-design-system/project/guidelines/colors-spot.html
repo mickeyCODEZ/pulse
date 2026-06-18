@@ -1,0 +1,30 @@
+<!-- @dsCard group="Colors" viewport="700x150" name="Colors · Press spot ink" subtitle="A single restrained second ink — press-red (day), brass (night)" -->
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body{margin:0;display:flex;font-family:var(--font-sans);}
+  .pane{flex:1;padding:18px;}
+  .row{display:flex;gap:0;border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;}
+  .sw{flex:1;}.chip{height:54px;}
+  .meta{padding:7px 8px;background:var(--surface-card);border-top:1px solid var(--border);}
+  .lab{font-family:var(--font-condensed);font-weight:600;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);}
+  .hex{font-family:var(--font-mono);font-size:9px;color:var(--text-faint);}
+  .k{font-family:var(--font-condensed);font-weight:600;text-transform:uppercase;letter-spacing:0.12em;font-size:10px;color:var(--text-faint);margin-bottom:8px;}
+</style></head><body>
+  <div class="pane" data-theme="light" style="background:var(--surface-page)">
+    <div class="k">Morning Edition</div>
+    <div class="row">
+      <div class="sw"><div class="chip" style="background:var(--spot)"></div><div class="meta"><div class="lab">spot</div><div class="hex">#9E2B23</div></div></div>
+      <div class="sw"><div class="chip" style="background:var(--spot-soft)"></div><div class="meta"><div class="lab">spot-soft</div><div class="hex">10%</div></div></div>
+      <div class="sw"><div class="chip" style="background:var(--accent)"></div><div class="meta"><div class="lab">ink</div><div class="hex">primary</div></div></div>
+    </div>
+  </div>
+  <div class="pane" data-theme="dark" style="background:var(--surface-page)">
+    <div class="k">Night Edition</div>
+    <div class="row">
+      <div class="sw"><div class="chip" style="background:var(--spot)"></div><div class="meta"><div class="lab">spot</div><div class="hex">#C7A24A</div></div></div>
+      <div class="sw"><div class="chip" style="background:var(--spot-soft)"></div><div class="meta"><div class="lab">spot-soft</div><div class="hex">12%</div></div></div>
+      <div class="sw"><div class="chip" style="background:var(--accent)"></div><div class="meta"><div class="lab">bone</div><div class="hex">primary</div></div></div>
+    </div>
+  </div>
+</body></html>

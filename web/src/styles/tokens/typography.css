@@ -1,0 +1,57 @@
+/* ============================================================
+   PULSE · TYPOGRAPHY — "1920s Press" edition
+   Display   = Bodoni Moda (Didone masthead serif)
+   Body      = EB Garamond (editorial reading serif)
+   Condensed = Oswald (newspaper department kickers, deco buttons)
+   Mono      = JetBrains Mono (wire-service metadata & sources)
+   ============================================================ */
+
+:root {
+  /* ---- Families ---- */
+  --font-display:   "Bodoni Moda", "Times New Roman", Georgia, serif;
+  --font-sans:      "EB Garamond", Georgia, "Times New Roman", serif;
+  --font-condensed: "Oswald", "Arial Narrow", "Hanken Grotesk", sans-serif;
+  --font-mono:      "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* ---- Type scale (rem) ---- */
+  --fs-display-2xl: 5.0rem;    /* 80 · onboarding hero          */
+  --fs-display-xl:  3.5rem;    /* 56 · screen titles            */
+  --fs-display-lg:  2.625rem;  /* 42 · section headers          */
+  --fs-display-md:  2.0rem;    /* 32 · event detail title       */
+  --fs-display-sm:  1.5rem;    /* 24 · card titles (large)      */
+  --fs-title:       1.25rem;   /* 20 · card titles              */
+  --fs-subtitle:    1.0625rem; /* 17 · lead body                */
+  --fs-body:        0.9375rem; /* 15 · default body             */
+  --fs-sm:          0.8125rem; /* 13 · secondary / meta         */
+  --fs-xs:          0.6875rem; /* 11 · mono labels / overline   */
+  --fs-2xs:         0.625rem;  /* 10 · pin markers              */
+
+  /* ---- Weights ---- */
+  --fw-light:    300; /* @kind font */
+  --fw-regular:  400; /* @kind font */
+  --fw-medium:   500; /* @kind font */
+  --fw-semibold: 600; /* @kind font */
+  --fw-bold:     700; /* @kind font */
+  --fw-black:    800; /* @kind font */
+
+  /* ---- Line heights ---- */
+  --lh-tight:   1.04; /* @kind font */
+  --lh-snug:    1.18; /* @kind font */
+  --lh-normal:  1.5; /* @kind font */
+  --lh-relaxed: 1.65; /* @kind font */
+
+  /* ---- Letter spacing ---- */
+  --ls-display: -0.02em; /* @kind font */
+  --ls-tight:   -0.01em; /* @kind font */
+  --ls-normal:  0; /* @kind font */
+  --ls-label:   0.16em; /* @kind font */
+  --ls-overline:0.22em; /* @kind font */
+}
+
+/* ---- Optional helper classes (consumers may use tokens directly) ---- */
+.t-display    { font-family: var(--font-display); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-display); }
+.t-title      { font-family: var(--font-display); font-weight: var(--fw-semibold); line-height: var(--lh-snug); letter-spacing: var(--ls-tight); }
+.t-body       { font-family: var(--font-sans); font-weight: var(--fw-regular); line-height: var(--lh-normal); }
+.t-kicker     { font-family: var(--font-condensed); font-weight: var(--fw-semibold); font-size: var(--fs-xs); letter-spacing: var(--ls-label); text-transform: uppercase; }
+.t-label      { font-family: var(--font-condensed); font-weight: var(--fw-medium); font-size: var(--fs-xs); letter-spacing: var(--ls-label); text-transform: uppercase; }
+.t-overline   { font-family: var(--font-mono); font-weight: var(--fw-medium); font-size: var(--fs-2xs); letter-spacing: var(--ls-overline); text-transform: uppercase; }

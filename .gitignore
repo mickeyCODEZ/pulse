@@ -1,0 +1,36 @@
+# OS / editor
+.DS_Store
+.claude/
+**/.claude/
+
+# Secrets & local env (NEVER commit). Templates (.env.example) are tracked.
+.env
+**/.env
+.env.local
+**/.env.local
+**/.env*.local
+
+# Vercel CLI link/state
+.vercel
+**/.vercel
+
+# Design handoff raw artifacts
+design_response.txt
+
+# Backend (Python)
+.venv/
+**/.venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+*.db
+*.db-journal
+
+# Frontend (Node/Vite)
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+.vite/
+**/.vite/
+*.tsbuildinfo

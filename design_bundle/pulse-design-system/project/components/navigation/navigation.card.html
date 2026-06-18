@@ -1,0 +1,62 @@
+<!-- @dsCard group="Components" viewport="700x430" name="Navigation · chips, filter bar, nav" subtitle="Filter chips, sticky filter bar, mobile bottom nav, desktop sidebar" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>
+  body { margin:0; background:var(--surface-page); padding:22px; }
+  .cap { font-family:var(--font-mono); font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-faint); margin:0 0 10px; display:block; }
+  .row { display:flex; gap:24px; align-items:flex-start; margin-top:20px; }
+  .frame { border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; background:var(--surface-card); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const NS = window.PulseDesignSystem_3c2543;
+const { FilterBar, BottomNav, SidebarNav } = NS;
+const I = (d) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">{d}</svg>;
+const home = I(<><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></>);
+const book = I(<path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/>);
+const bell = I(<><path d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z"/><path d="M10 20a2 2 0 0 0 4 0"/></>);
+const user = I(<><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></>);
+
+function Demo(){
+  const [act,setAct] = React.useState(["weekend","free"]);
+  const tog = k => setAct(a => a.includes(k)?a.filter(x=>x!==k):[...a,k]);
+  const [nav,setNav] = React.useState("feed");
+  const filters=[{key:"today",label:"Today"},{key:"weekend",label:"This weekend"},{key:"free",label:"Free"},{key:"near",label:"Near me"},{key:"music",label:"Live music"},{key:"art",label:"Art"}];
+  const items=[{key:"feed",label:"Feed",icon:home},{key:"saved",label:"Saved",icon:book},{key:"digest",label:"Digest",icon:bell,badge:true},{key:"me",label:"For me",icon:user}];
+  return (
+    <div>
+      <span className="cap">Filter bar (sticky)</span>
+      <div className="frame">
+        <FilterBar filters={filters} active={act} onToggle={tog} sticky={false} />
+      </div>
+      <div className="row">
+        <div style={{flex:"0 0 280px"}}>
+          <span className="cap">Mobile bottom nav</span>
+          <div className="frame">
+            <BottomNav items={items} active={nav} onSelect={setNav} />
+          </div>
+        </div>
+        <div style={{flex:"0 0 240px"}}>
+          <span className="cap">Desktop sidebar</span>
+          <div className="frame" style={{padding:"12px"}}>
+            <SidebarNav items={items.map(i=>({...i,badge:i.key==="digest"?3:undefined}))} active={nav} onSelect={setNav} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<Demo/>);
+</script>
+</body>
+</html>

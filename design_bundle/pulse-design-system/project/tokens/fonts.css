@@ -1,0 +1,9 @@
+/* Pulse webfonts — "1920s Press" edition.
+   NOTE: No brand font files were provided. Google Fonts substitutes:
+   - Masthead / display : Bodoni Moda   (Didone — the jazz-age magazine serif)
+   - Body / reading     : EB Garamond   (classic editorial book serif)
+   - Kickers / deco      : Oswald        (condensed gothic — newspaper departments & deco buttons)
+   - Wire / metadata    : JetBrains Mono (teletype voice for sources & timestamps)
+   Replace the @import below with self-hosted @font-face when real files exist. */
+
+@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;0,6..96,600;0,6..96,700;0,6..96,800;1,6..96,400;1,6..96,500&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Oswald:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
