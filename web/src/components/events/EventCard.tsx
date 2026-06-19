@@ -12,6 +12,7 @@ export interface EventCardProps {
   saved?: boolean;
   onSave?: () => void;
   onDismiss?: () => void;
+  dismissable?: boolean; // show the dismiss (×) control; false in contexts where it's meaningless
   onOpen?: () => void;
   style?: CSSProperties;
 }
@@ -27,6 +28,7 @@ export function EventCard({
   saved = false,
   onSave,
   onDismiss,
+  dismissable = true,
   onOpen,
   style,
 }: EventCardProps) {
@@ -75,6 +77,7 @@ export function EventCard({
         <div style={{ display: "flex", alignItems: "center" }}>
           <SaveDismiss
             saved={saved}
+            showDismiss={dismissable}
             onSave={(e) => {
               e?.stopPropagation?.();
               onSave?.();
@@ -170,6 +173,7 @@ export function EventCard({
             <SaveDismiss
               saved={saved}
               overlay
+              showDismiss={dismissable}
               onSave={(e) => {
                 e?.stopPropagation?.();
                 onSave?.();

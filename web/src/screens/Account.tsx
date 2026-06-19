@@ -11,9 +11,12 @@ import { Eyebrow } from "../shell/Eyebrow";
 import { api } from "../api";
 
 function Row({ icon, label, value, onClick, last }: { icon: ReactNode; label: string; value?: string; onClick?: () => void; last?: boolean }) {
+  // Info-only rows (no onClick) shouldn't look tappable: no chevron, no pointer.
+  const clickable = !!onClick;
   return (
     <button
       onClick={onClick}
+      disabled={!clickable}
       style={{
         display: "flex",
         width: "100%",
@@ -23,16 +26,18 @@ function Row({ icon, label, value, onClick, last }: { icon: ReactNode; label: st
         background: "transparent",
         border: "none",
         borderBottom: last ? "none" : "1px solid var(--border)",
-        cursor: "pointer",
+        cursor: clickable ? "pointer" : "default",
         textAlign: "left",
       }}
     >
       <span style={{ color: "var(--text-muted)", display: "flex" }}>{icon}</span>
       <span style={{ flex: 1, fontSize: "var(--fs-body)", color: "var(--text-strong)", fontWeight: "var(--fw-medium)" }}>{label}</span>
       {value && <span style={{ fontFamily: "var(--font-mono)", fontSize: "var(--fs-xs)", color: "var(--text-muted)", letterSpacing: "0.02em" }}>{value}</span>}
-      <span style={{ color: "var(--text-faint)", display: "flex" }}>
-        <ChevronRight size={18} />
-      </span>
+      {clickable && (
+        <span style={{ color: "var(--text-faint)", display: "flex" }}>
+          <ChevronRight size={18} />
+        </span>
+      )}
     </button>
   );
 }
@@ -55,9 +60,10 @@ export interface AccountProps {
   city: City;
   account?: string | null; // logged-in email, or null
   onAuthChange?: (email: string | null) => void;
+  onChangeHome?: () => void; // open the city picker to set the home city
 }
 
-export function Account({ theme, setTheme, onNavigate, city, account, onAuthChange }: AccountProps) {
+export function Account({ theme, setTheme, onNavigate, city, account, onAuthChange, onChangeHome }: AccountProps) {
   const [email, setEmail] = useState("");
   const [waitState, setWaitState] = useState<"idle" | "sending" | "done" | "error">("idle");
   // Auth form
@@ -201,7 +207,7 @@ export function Account({ theme, setTheme, onNavigate, city, account, onAuthChan
       <Group title="Personalization">
         <Row icon={<Sliders size={18} />} label="For me — interests & ranking" onClick={() => onNavigate && onNavigate("me")} />
         <Row icon={<Bell size={18} />} label="Notifications & digest" onClick={() => onNavigate && onNavigate("digest")} />
-        <Row icon={<Pin size={18} />} label="Home city" value={city ? city.name : "Lisbon"} last />
+        <Row icon={<Pin size={18} />} label="Home city" value={city ? city.name : "Lisbon"} onClick={onChangeHome} last />
       </Group>
 
       <section style={{ marginBottom: "var(--space-6)" }}>

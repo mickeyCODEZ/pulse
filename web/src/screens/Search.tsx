@@ -256,7 +256,7 @@ export function SearchScreen({ events, saved, onSave, onDismiss, onOpen, city, c
           <Eyebrow style={{ marginBottom: "var(--space-3)" }}>Trending near you</Eyebrow>
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
             {events.slice(0, 3).map((e) => (
-              <EventCard key={e.id} event={e} variant="compact" saved={saved.has(e.id)} onSave={() => onSave(e.id)} onOpen={() => onOpen(e)} />
+              <EventCard key={e.id} event={e} variant="compact" saved={saved.has(e.id)} onSave={() => onSave(e.id)} onDismiss={() => onDismiss(e.id)} onOpen={() => onOpen(e)} />
             ))}
           </div>
         </>

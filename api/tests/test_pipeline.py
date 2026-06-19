@@ -115,6 +115,26 @@ def test_ssrf_guard_blocks_private_and_bad_schemes():
         assert is_safe_url(bad) is False, bad
 
 
+def test_reverse_country_caches_and_handles_missing_coords():
+    # The all-locations safety net: a detected city WITHOUT a country must still
+    # resolve one from coords so its Eventbrite slugs aren't empty. No-coords and
+    # cache-hit paths must never touch the network.
+    from app import feeds
+    assert feeds.reverse_country(None, None) == ""
+    feeds._COUNTRY_CACHE[(round(35.7, 1), round(139.7, 1))] = "Japan"
+    assert feeds.reverse_country(35.68, 139.69) == "Japan"  # served from cache, no HTTP
+
+
+def test_eventbrite_feeds_need_a_country():
+    # Without a country the slug can't be built (the bug reverse_country guards):
+    # empty country yields no feeds; a country yields the full category fan-out.
+    from app.feeds import eventbrite_feeds_for_city, EVENTBRITE_CATEGORIES
+    assert eventbrite_feeds_for_city("Madrid", "") == []
+    feeds = eventbrite_feeds_for_city("Madrid", "Spain", 40.4, -3.7)
+    assert len(feeds) == len(EVENTBRITE_CATEGORIES)
+    assert all("spain--madrid" in f.base_url for f in feeds)
+
+
 def _run():
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for fn in fns:

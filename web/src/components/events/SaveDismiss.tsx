@@ -5,6 +5,7 @@ export interface SaveDismissProps {
   saved?: boolean;
   onSave?: (e?: MouseEvent) => void;
   onDismiss?: (e?: MouseEvent) => void;
+  showDismiss?: boolean; // hide the dismiss (×) where it has no meaning, e.g. the Saved list
   overlay?: boolean;
   size?: "sm" | "md" | "lg";
   style?: CSSProperties;
@@ -18,6 +19,7 @@ export function SaveDismiss({
   saved = false,
   onSave,
   onDismiss,
+  showDismiss = true,
   overlay = false,
   size = "md",
   style,
@@ -43,16 +45,18 @@ export function SaveDismiss({
     : undefined;
   return (
     <div style={{ display: "inline-flex", gap: "var(--space-2)", ...style }}>
-      <IconButton
-        label="Dismiss"
-        size={size}
-        round
-        variant={overlay ? "ghost" : "outline"}
-        onClick={onDismiss}
-        style={overlayStyle}
-      >
-        {x}
-      </IconButton>
+      {showDismiss && (
+        <IconButton
+          label="Dismiss"
+          size={size}
+          round
+          variant={overlay ? "ghost" : "outline"}
+          onClick={onDismiss}
+          style={overlayStyle}
+        >
+          {x}
+        </IconButton>
+      )}
       <IconButton
         label={saved ? "Saved" : "Save"}
         size={size}

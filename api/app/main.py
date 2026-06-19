@@ -502,11 +502,19 @@ def refresh(
             last = last.replace(tzinfo=timezone.utc)
         if (datetime.now(timezone.utc) - last).total_seconds() < settings.refresh_min_interval_s:
             return {"city": city, "active_events": existing.count, "cached": True}
-    stats = refresh_city(session, city, lat=lat, lng=lng, country=country or (existing.country if existing else ""))
+    country = country or (existing.country if existing else "")
+    if not country and lat is not None and lng is not None:
+        # Derive (and below, persist) the country so a geolocated city without one
+        # still gets full Eventbrite coverage — and only pays the lookup once.
+        from .feeds import reverse_country
+        country = reverse_country(lat, lng)
+    stats = refresh_city(session, city, lat=lat, lng=lng, country=country)
     count = len(session.exec(select(Event).where(Event.status == "active", Event.city == city)).all())
     row = session.get(City, city)
     if row is None:
         row = City(name=city, country=country or "", lat=lat or 0.0, lng=lng or 0.0, count=count, active=True)
+    if country and not row.country:
+        row.country = country
     row.count = count
     row.last_full_crawl_at = datetime.now(timezone.utc)
     session.add(row)

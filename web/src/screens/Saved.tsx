@@ -10,10 +10,11 @@ export interface SavedProps {
   events: PulseEvent[];
   onOpen: (e: PulseEvent) => void;
   onSave: (id: string) => void;
+  onBrowse?: () => void;
   empty?: boolean;
 }
 
-export function Saved({ saved, events, onOpen, onSave, empty }: SavedProps) {
+export function Saved({ saved, events, onOpen, onSave, onBrowse, empty }: SavedProps) {
   const list = events.filter((e) => saved.has(e.id));
   if (empty || list.length === 0) {
     return (
@@ -21,7 +22,7 @@ export function Saved({ saved, events, onOpen, onSave, empty }: SavedProps) {
         glyph="saved"
         title="Nothing saved yet"
         body="Tap the bookmark on any event and it lands here — with a calendar export when you're ready."
-        action={<Button variant="secondary">Browse the feed</Button>}
+        action={<Button variant="secondary" onClick={onBrowse}>Browse the feed</Button>}
       />
     );
   }
@@ -37,7 +38,7 @@ export function Saved({ saved, events, onOpen, onSave, empty }: SavedProps) {
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
         {list.map((e) => (
-          <EventCard key={e.id} event={e} variant="compact" saved onSave={() => onSave(e.id)} onOpen={() => onOpen(e)} />
+          <EventCard key={e.id} event={e} variant="compact" saved dismissable={false} onSave={() => onSave(e.id)} onOpen={() => onOpen(e)} />
         ))}
       </div>
     </div>

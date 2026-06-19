@@ -73,6 +73,42 @@ _COUNTRY_ALIAS = {
 }
 
 
+# Best-effort country lookup from coordinates, cached per ~11km cell. The whole
+# point: a detected location must yield real events EVEN IF the client's reverse-
+# geocode didn't return a country — without one, every Eventbrite slug is empty
+# and the feed collapses to the sparse keyed APIs. "" on any failure (caller then
+# degrades gracefully), never raising into the ingest path.
+_COUNTRY_CACHE: dict[tuple[float, float], str] = {}
+
+
+def reverse_country(lat: Optional[float], lng: Optional[float]) -> str:
+    """Resolve a country name from lat/lng via BigDataCloud's free, keyless
+    reverse-geocoder (the same service the web client uses). Cached + short
+    timeout so it never stalls ingest; returns "" if it can't resolve."""
+    if lat is None or lng is None:
+        return ""
+    key = (round(lat, 1), round(lng, 1))
+    if key in _COUNTRY_CACHE:
+        return _COUNTRY_CACHE[key]
+    country = ""
+    try:
+        import httpx
+
+        r = httpx.get(
+            "https://api-bdc.io/data/reverse-geocode-client",
+            params={"latitude": lat, "longitude": lng, "localityLanguage": "en"},
+            timeout=6.0,
+        )
+        if r.status_code == 200:
+            country = (r.json().get("countryName") or "").strip()
+    except Exception:
+        country = ""
+    if len(_COUNTRY_CACHE) > 5000:
+        _COUNTRY_CACHE.clear()
+    _COUNTRY_CACHE[key] = country
+    return country
+
+
 def eventbrite_feeds_for_city(city: str, country: str, lat: float = 0.0, lng: float = 0.0) -> list[SourceDef]:
     """All-types Eventbrite listing feeds for ANY city, built from its name +
     country at refresh time. Eventbrite's global /d/<country>--<city>/<cat>/ pages

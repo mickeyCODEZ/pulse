@@ -22,17 +22,16 @@ import { Saved } from "./screens/Saved";
 import { SearchScreen } from "./screens/Search";
 import { Account } from "./screens/Account";
 import { SignIn } from "./screens/SignIn";
-import { StatesGallery } from "./screens/States";
 import { LocationPicker } from "./screens/LocationPicker";
 import { LocationGate } from "./screens/LocationGate";
-import { Home, Search, Bookmark, Bell, User, Sparkles, MapIcon } from "./icons";
+import { Home, Search, Bookmark, Bell, User, MapIcon } from "./icons";
 import { useIsDesktop } from "./hooks";
 import { api, backendOnline } from "./api";
 import { detectLocation, locationToCity } from "./geo";
 
 type Route =
   | "feed" | "detail" | "saved" | "digest" | "me"
-  | "search" | "account" | "states" | "signin" | "onboarding" | "map";
+  | "search" | "account" | "signin" | "onboarding" | "map";
 
 const NAV = [
   { key: "feed", label: "Feed", icon: <Home size={20} /> },
@@ -324,6 +323,9 @@ export default function App() {
   const pickCity = (c: City) => {
     setCity(c);
     persistCity(c);
+    // The chosen city IS the home base — sync it to the backend profile so it
+    // survives across devices (when signed in) and seeds the default feed.
+    if (online) void api.putProfile({ home_base_city: c.name, home_lat: c.lat, home_lng: c.lng });
     setPicker(false);
     setNeedLocation(false); // a choice clears the first-run location gate
     setLoading(true);
@@ -532,7 +534,9 @@ export default function App() {
           <EventDetailView
             event={sel}
             saved={saved.has(sel?.id ?? "")}
+            savedSet={saved}
             onSave={toggleSave}
+            onDismiss={dismiss}
             onBack={() => setRoute("feed")}
             more={moreLike}
             onOpen={open}
@@ -541,7 +545,7 @@ export default function App() {
           />
         );
       case "saved":
-        return <Saved saved={saved} events={savedEvents.length || online ? savedEvents : catalog.filter((e) => saved.has(e.id))} onSave={toggleSave} onOpen={open} />;
+        return <Saved saved={saved} events={savedEvents.length || online ? savedEvents : catalog.filter((e) => saved.has(e.id))} onSave={toggleSave} onOpen={open} onBrowse={() => setRoute("feed")} />;
       case "digest":
         return <Digest onOpen={open} items={digestEvents.length ? digestEvents : undefined} />;
       case "me":
@@ -549,16 +553,14 @@ export default function App() {
       case "search":
         return <SearchScreen events={events} saved={saved} onSave={toggleSave} onDismiss={dismiss} onOpen={open} city={city} cityList={cityList} onSwitchCity={(c) => { pickCity(c); setRoute("feed"); }} />;
       case "account":
-        return <Account theme={theme} setTheme={setTheme} onNavigate={(r) => setRoute(r as Route)} city={city} account={account} onAuthChange={onAuthChange} />;
-      case "states":
-        return <StatesGallery />;
+        return <Account theme={theme} setTheme={setTheme} onNavigate={(r) => setRoute(r as Route)} city={city} account={account} onAuthChange={onAuthChange} onChangeHome={() => setPicker(true)} />;
       default:
         return null;
     }
   };
 
   const fullSurface =
-    route === "signin" ? <SignIn onContinue={() => setRoute("onboarding")} /> : <Onboarding onDone={() => setRoute("feed")} onComplete={saveProfile} />;
+    route === "signin" ? <SignIn onContinue={() => setRoute("onboarding")} /> : <Onboarding onDone={() => setRoute("feed")} onComplete={saveProfile} cityList={cityList} onPickCity={pickCity} />;
 
   // ===== Onboarding / Sign-in: take the whole surface =====
   if (isOnboarding) {
@@ -613,11 +615,6 @@ export default function App() {
           </div>
           <SidebarNav items={navItems} active={route === "detail" ? "feed" : route} onSelect={(k) => setRoute(k as Route)} />
           <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: "2px" }}>
-            <SidebarNav
-              items={[{ key: "states", label: "States", icon: <Sparkles size={20} /> }]}
-              active={route}
-              onSelect={(k) => setRoute(k as Route)}
-            />
             <button
               onClick={() => setRoute("account")}
               style={{

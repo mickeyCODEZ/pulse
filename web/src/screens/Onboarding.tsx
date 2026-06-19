@@ -1,14 +1,12 @@
 import { useEffect, useState } from "react";
-import { interests, cities } from "../data";
+import { interests, type City } from "../data";
 import { Logo } from "../components/core/Logo";
 import { Button } from "../components/core/Button";
-import { Input } from "../components/forms/Input";
 import { Switch } from "../components/forms/Switch";
 import { Select } from "../components/forms/Select";
 import { Checkbox } from "../components/forms/Checkbox";
-import { Tag } from "../components/core/Tag";
+import { CitySearch } from "../components/search/CitySearch";
 import { EventCardSkeleton } from "../components/feedback/Skeleton";
-import { Search } from "../icons";
 import { Eyebrow } from "../shell/Eyebrow";
 import { Row } from "./ui-bits";
 
@@ -21,9 +19,20 @@ const titleStyle = {
   margin: "var(--space-3) 0 var(--space-2)",
 } as const;
 
-export function Onboarding({ onDone, onComplete }: { onDone: () => void; onComplete?: (patch: Record<string, unknown>) => void }) {
+export function Onboarding({
+  onDone,
+  onComplete,
+  cityList = [],
+  onPickCity,
+}: {
+  onDone: () => void;
+  onComplete?: (patch: Record<string, unknown>) => void;
+  cityList?: City[];
+  onPickCity?: (c: City) => void;
+}) {
   const [step, setStep] = useState(0);
   const [picked, setPicked] = useState<string[]>(["Live music", "Art", "Food"]);
+  const [home, setHome] = useState<City | null>(null);
   const [free, setFree] = useState(false);
   const [weekends, setWeekends] = useState(true);
   const [dist, setDist] = useState("3 miles");
@@ -33,7 +42,11 @@ export function Onboarding({ onDone, onComplete }: { onDone: () => void; onCompl
   const steps = ["Interests", "Home base", "Dealbreakers"];
 
   const finish = () => {
+    // Set the chosen home city as the active city (loads its feed + syncs to the
+    // backend profile); fall back to including it in the profile patch directly.
+    if (home && onPickCity) onPickCity(home);
     onComplete?.({
+      ...(home ? { home_base_city: home.name, home_lat: home.lat, home_lng: home.lng } : {}),
       interest_tags: picked,
       dealbreakers: {
         free_only: free,
@@ -121,13 +134,20 @@ export function Onboarding({ onDone, onComplete }: { onDone: () => void; onCompl
           <div>
             <h1 style={titleStyle}>Where's home base?</h1>
             <p style={{ color: "var(--text-muted)", margin: "0 0 var(--space-5)" }}>Set it once. Switch cities any time you travel.</p>
-            <Input label="Home base" placeholder="Search a city or address" iconLeft={<Search size={18} />} defaultValue="Lisbon, Portugal" />
-            <Eyebrow style={{ margin: "var(--space-5) 0 var(--space-3)" }}>Recent</Eyebrow>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-              {cities.slice(0, 4).map((c) => (
-                <Tag key={c.id}>{c.name}</Tag>
-              ))}
-            </div>
+            <CitySearch
+              cityList={cityList}
+              size="md"
+              placeholder="Search a city — Toronto, Lisbon, Tokyo…"
+              onPick={(c) => {
+                setHome(c);
+                setStep(2);
+              }}
+            />
+            {home && (
+              <p style={{ marginTop: "var(--space-4)", fontSize: "var(--fs-sm)", color: "var(--text-muted)" }}>
+                Home base: <b style={{ color: "var(--text-strong)" }}>{[home.name, home.country].filter(Boolean).join(", ")}</b>
+              </p>
+            )}
           </div>
         )}
         {step === 2 && (

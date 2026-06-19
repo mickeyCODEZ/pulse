@@ -33,7 +33,9 @@ function OutboundRow({ source, primary, url, onGo }: { source: string; primary: 
 export interface EventDetailViewProps {
   event: PulseEvent | null;
   saved: boolean;
+  savedSet?: Set<string>; // to reflect saved state on "more like this" cards
   onSave: (id: string) => void;
+  onDismiss?: (id: string) => void;
   onBack: () => void;
   more?: PulseEvent[];
   onOpen: (e: PulseEvent) => void;
@@ -48,7 +50,7 @@ const overlayBtn = {
   border: "1px solid color-mix(in srgb, var(--white) 22%, transparent)",
 } as const;
 
-export function EventDetailView({ event, saved, onSave, onBack, more = [], onOpen, mode = "mobile", theme = "light" }: EventDetailViewProps) {
+export function EventDetailView({ event, saved, savedSet, onSave, onDismiss, onBack, more = [], onOpen, mode = "mobile", theme = "light" }: EventDetailViewProps) {
   if (!event) return null;
   const meta = [event.date, event.venue, event.distance].filter(Boolean).join("  ·  ");
   const sources = event.sources || [];
@@ -156,7 +158,16 @@ export function EventDetailView({ event, saved, onSave, onBack, more = [], onOpe
             <Eyebrow style={{ marginBottom: "var(--space-3)" }}>More like this</Eyebrow>
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
               {more.map((e) => (
-                <EventCard key={e.id} event={e} variant="compact" onOpen={() => onOpen(e)} />
+                <EventCard
+                  key={e.id}
+                  event={e}
+                  variant="compact"
+                  saved={savedSet?.has(e.id) ?? false}
+                  onSave={() => onSave(e.id)}
+                  onDismiss={onDismiss ? () => onDismiss(e.id) : undefined}
+                  dismissable={!!onDismiss}
+                  onOpen={() => onOpen(e)}
+                />
               ))}
             </div>
           </div>

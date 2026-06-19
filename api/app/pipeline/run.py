@@ -51,6 +51,11 @@ def ingest(
             from ..models import City as _City
             row = session.get(_City, city)
             country = (row.country if row else "") or ""
+        if not country:
+            # Last resort: derive it from coords so a detected location whose
+            # client couldn't supply a country still gets all-types coverage.
+            from ..feeds import reverse_country
+            country = reverse_country(lat, lng)
         try:
             from ..feeds import eventbrite_feeds_for_city
             from ..sources import _build_city_adapter
@@ -103,6 +108,9 @@ def ingest_query(
         from ..models import City as _City
         row = session.get(_City, city)
         country = (row.country if row else "") or ""
+    if not country:
+        from ..feeds import reverse_country
+        country = reverse_country(lat, lng)
     from ..feeds import eventbrite_query_feed
     from ..sources import _build_city_adapter
 
