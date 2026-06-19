@@ -153,6 +153,7 @@ export default function App() {
   const [catalog, setCatalog] = useState<PulseEvent[]>([]); // real events only; no bundled samples
   const [cityList, setCityList] = useState<City[]>(CITIES);
   const [online, setOnline] = useState(false);
+  const [account, setAccount] = useState<string | null>(null); // logged-in email, or null
   const [userLoc, setUserLoc] = useState<{ lat: number; lng: number } | null>(null);
   const [mapW, setMapW] = useState(420); // desktop map-rail width, user-resizable
   // Feed lifecycle for honest states (no blank screens, no fake fallback data).
@@ -221,6 +222,7 @@ export default function App() {
         setFeedStatus("error");
         return;
       }
+      api.me().then((m) => { if (!cancelled) setAccount(m.email); }).catch(() => {});
       // Resolve a deep-linked ?event=<id> against the backend (real events have
       // UUIDs not in the bundled sample set).
       const evParam = params.get("event");
@@ -310,6 +312,14 @@ export default function App() {
     if (!online) return;
     await api.putProfile(patch);
     await loadFeed(city, active);
+  };
+  // Login / signup / logout: identity changed → reset saved state and reload it
+  // for the new identity (account vs device).
+  const onAuthChange = (email: string | null) => {
+    setAccount(email);
+    setSaved(new Set());
+    setSavedEvents([]);
+    void loadFeed(city, active);
   };
   const pickCity = (c: City) => {
     setCity(c);
@@ -422,7 +432,7 @@ export default function App() {
         </IconButton>
         {!desktop && (
           <button onClick={() => setRoute("account")} style={{ border: "none", background: "transparent", padding: 0, cursor: "pointer" }} aria-label="Account">
-            <Avatar name="You" size={32} />
+            <Avatar name={account || "You"} size={32} />
           </button>
         )}
       </div>
@@ -539,7 +549,7 @@ export default function App() {
       case "search":
         return <SearchScreen events={events} saved={saved} onSave={toggleSave} onDismiss={dismiss} onOpen={open} city={city} cityList={cityList} onSwitchCity={(c) => { pickCity(c); setRoute("feed"); }} />;
       case "account":
-        return <Account theme={theme} setTheme={setTheme} onNavigate={(r) => setRoute(r as Route)} onSignOut={() => setRoute("signin")} city={city} />;
+        return <Account theme={theme} setTheme={setTheme} onNavigate={(r) => setRoute(r as Route)} city={city} account={account} onAuthChange={onAuthChange} />;
       case "states":
         return <StatesGallery />;
       default:
@@ -625,10 +635,10 @@ export default function App() {
                 background: route === "account" ? "var(--accent-soft)" : "transparent",
               }}
             >
-              <Avatar name="You" size={34} />
+              <Avatar name={account || "You"} size={34} />
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: "var(--fs-sm)", fontWeight: "var(--fw-semibold)", color: "var(--text-strong)" }}>You</div>
-                <div style={{ fontFamily: "var(--font-mono)", fontSize: "var(--fs-2xs)", color: "var(--text-muted)" }}>Browsing anonymously</div>
+                <div style={{ fontSize: "var(--fs-sm)", fontWeight: "var(--fw-semibold)", color: "var(--text-strong)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{account || "You"}</div>
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: "var(--fs-2xs)", color: "var(--text-muted)" }}>{account ? "Signed in" : "Browsing anonymously"}</div>
               </div>
             </button>
           </div>

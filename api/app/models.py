@@ -118,6 +118,24 @@ class Waitlist(SQLModel, table=True):
     created_at: datetime = Field(default_factory=utcnow)
 
 
+class User(SQLModel, table=True):
+    """Basic email+password account so saves follow the person across devices."""
+    __tablename__ = "users"
+    id: str = Field(default_factory=_uuid, primary_key=True)
+    email: str = Field(index=True, unique=True)
+    password_hash: str = ""  # pbkdf2-hmac(sha256), hex
+    salt: str = ""           # hex
+    created_at: datetime = Field(default_factory=utcnow)
+
+
+class AuthToken(SQLModel, table=True):
+    """Opaque session token → user. One per device login (basic, no expiry)."""
+    __tablename__ = "auth_tokens"
+    token: str = Field(primary_key=True)
+    user_id: str = Field(index=True)
+    created_at: datetime = Field(default_factory=utcnow)
+
+
 class City(SQLModel, table=True):
     __tablename__ = "cities"
     name: str = Field(primary_key=True)

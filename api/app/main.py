@@ -51,11 +51,33 @@ def require_token(x_pulse_token: Optional[str] = Header(default=None)) -> None:
         raise HTTPException(status_code=401, detail="Invalid or missing token")
 
 
-# ---- anonymous per-device identity ----------------------------------------
-def get_device_id(x_device_id: Optional[str] = Header(default=None)) -> str:
-    """Each browser sends a stable anonymous id; scopes saves + preferences.
-    Falls back to the shared 'me' profile when absent so nothing 500s."""
+# ---- identity: logged-in user, else anonymous device ----------------------
+import hashlib
+import secrets
+from .models import AuthToken, User
+
+
+def _hash_pw(password: str, salt: str) -> str:
+    return hashlib.pbkdf2_hmac("sha256", password.encode(), bytes.fromhex(salt), 100_000).hex()
+
+
+def _device_of(x_device_id: Optional[str]) -> str:
     return ((x_device_id or "").strip()[:64]) or "me"
+
+
+def get_identity(
+    authorization: Optional[str] = Header(default=None),
+    x_device_id: Optional[str] = Header(default=None),
+    session: Session = Depends(get_session),
+) -> str:
+    """Scoping key for saves + preferences. A valid Bearer token → 'user:<id>'
+    (follows the person across devices); otherwise the anonymous device id."""
+    if authorization and authorization.lower().startswith("bearer "):
+        tok = authorization[7:].strip()
+        row = session.get(AuthToken, tok) if tok else None
+        if row is not None:
+            return f"user:{row.user_id}"
+    return _device_of(x_device_id)
 
 
 def _migrate(session: Session) -> None:
@@ -101,6 +123,82 @@ def health() -> dict[str, Any]:
     return {"status": "ok", "active_events": events, "time": datetime.now(timezone.utc).isoformat()}
 
 
+# ---- auth (basic email + password) -----------------------------------------
+def _issue_token(session: Session, user_id: str) -> str:
+    tok = secrets.token_urlsafe(32)
+    session.add(AuthToken(token=tok, user_id=user_id))
+    session.commit()
+    return tok
+
+
+def _migrate_device_to_user(session: Session, device: str, user_id: str) -> None:
+    """Carry a signup's anonymous saves + preferences into the new account."""
+    if not device or device in ("me", "anon") or device.startswith("user:"):
+        return
+    for a in session.exec(select(UserEventAction).where(UserEventAction.device_id == device)).all():
+        a.device_id = f"user:{user_id}"
+        session.add(a)
+    dp = session.get(UserProfile, device)
+    up = session.get(UserProfile, f"user:{user_id}")
+    if dp is not None and up is None:
+        session.add(UserProfile(
+            id=f"user:{user_id}", home_base_city=dp.home_base_city, home_lat=dp.home_lat, home_lng=dp.home_lng,
+            interest_tags=dp.interest_tags, dealbreakers=dp.dealbreakers, boosts=dp.boosts, mutes=dp.mutes,
+            long_tail_weight=dp.long_tail_weight,
+        ))
+    session.commit()
+
+
+@app.post("/auth/signup", dependencies=[Depends(require_token)])
+def signup(body: dict[str, Any], session: Session = Depends(get_session), x_device_id: Optional[str] = Header(default=None)) -> dict[str, Any]:
+    email = (body.get("email") or "").strip().lower()
+    password = body.get("password") or ""
+    if "@" not in email or "." not in email or len(email) > 254:
+        raise HTTPException(400, "valid email required")
+    if len(password) < 6:
+        raise HTTPException(400, "password must be at least 6 characters")
+    if session.exec(select(User).where(User.email == email)).first():
+        raise HTTPException(409, "an account with that email already exists")
+    salt = secrets.token_hex(16)
+    user = User(email=email, salt=salt, password_hash=_hash_pw(password, salt))
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    _migrate_device_to_user(session, _device_of(x_device_id), user.id)
+    return {"token": _issue_token(session, user.id), "email": user.email}
+
+
+@app.post("/auth/login", dependencies=[Depends(require_token)])
+def login(body: dict[str, Any], session: Session = Depends(get_session)) -> dict[str, Any]:
+    email = (body.get("email") or "").strip().lower()
+    password = body.get("password") or ""
+    user = session.exec(select(User).where(User.email == email)).first()
+    if user is None or not secrets.compare_digest(user.password_hash, _hash_pw(password, user.salt)):
+        raise HTTPException(401, "wrong email or password")
+    return {"token": _issue_token(session, user.id), "email": user.email}
+
+
+@app.post("/auth/logout")
+def logout(session: Session = Depends(get_session), authorization: Optional[str] = Header(default=None)) -> dict[str, Any]:
+    if authorization and authorization.lower().startswith("bearer "):
+        row = session.get(AuthToken, authorization[7:].strip())
+        if row is not None:
+            session.delete(row)
+            session.commit()
+    return {"ok": True}
+
+
+@app.get("/auth/me")
+def auth_me(session: Session = Depends(get_session), authorization: Optional[str] = Header(default=None)) -> dict[str, Any]:
+    if authorization and authorization.lower().startswith("bearer "):
+        row = session.get(AuthToken, authorization[7:].strip())
+        if row is not None:
+            user = session.get(User, row.user_id)
+            if user is not None:
+                return {"email": user.email}
+    return {"email": None}
+
+
 # ---- feed ------------------------------------------------------------------
 _CHIP_TO_CATEGORY = {
     "music": "Live music", "art": "Art", "food": "Food", "film": "Film",
@@ -113,7 +211,7 @@ _CHIP_TO_CATEGORY = {
 @app.get("/feed", dependencies=[Depends(require_token)])
 def feed(
     session: Session = Depends(get_session),
-    device: str = Depends(get_device_id),
+    device: str = Depends(get_identity),
     city: Optional[str] = None,
     lat: Optional[float] = None,
     lng: Optional[float] = None,
@@ -212,7 +310,7 @@ _SEARCH_TS: dict[str, datetime] = {}
 @app.get("/search", dependencies=[Depends(require_token)])
 def search(
     session: Session = Depends(get_session),
-    device: str = Depends(get_device_id),
+    device: str = Depends(get_identity),
     q: Optional[str] = None,
     city: Optional[str] = None,
     lat: Optional[float] = None,
@@ -285,7 +383,7 @@ def get_event(event_id: str, session: Session = Depends(get_session)) -> dict[st
 @app.post("/events/{event_id}/action", dependencies=[Depends(require_token)])
 def post_action(
     event_id: str, body: dict[str, Any],
-    session: Session = Depends(get_session), device: str = Depends(get_device_id),
+    session: Session = Depends(get_session), device: str = Depends(get_identity),
 ) -> dict[str, Any]:
     action = body.get("action")
     if action not in {"saved", "unsaved", "dismissed", "clicked"}:
@@ -298,7 +396,7 @@ def post_action(
 
 
 @app.get("/saved", dependencies=[Depends(require_token)])
-def saved(session: Session = Depends(get_session), device: str = Depends(get_device_id)) -> dict[str, Any]:
+def saved(session: Session = Depends(get_session), device: str = Depends(get_identity)) -> dict[str, Any]:
     # Only THIS device's saves — never another visitor's.
     actions = session.exec(
         select(UserEventAction).where(
@@ -323,7 +421,7 @@ def saved(session: Session = Depends(get_session), device: str = Depends(get_dev
 
 @app.get("/digest", dependencies=[Depends(require_token)])
 def digest(
-    session: Session = Depends(get_session), device: str = Depends(get_device_id), city: Optional[str] = None,
+    session: Session = Depends(get_session), device: str = Depends(get_identity), city: Optional[str] = None,
 ) -> dict[str, Any]:
     profile = _profile(session, device)
     city = city or profile.home_base_city
@@ -344,13 +442,13 @@ def digest(
 
 
 @app.get("/profile", dependencies=[Depends(require_token)])
-def get_profile(session: Session = Depends(get_session), device: str = Depends(get_device_id)) -> UserProfile:
+def get_profile(session: Session = Depends(get_session), device: str = Depends(get_identity)) -> UserProfile:
     return _profile(session, device)
 
 
 @app.put("/profile", dependencies=[Depends(require_token)])
 def put_profile(
-    body: dict[str, Any], session: Session = Depends(get_session), device: str = Depends(get_device_id),
+    body: dict[str, Any], session: Session = Depends(get_session), device: str = Depends(get_identity),
 ) -> UserProfile:
     # Update ONLY this device's profile. Ranking is applied per-request at /feed,
     # so there's no global re-rank to contaminate other devices.
@@ -366,7 +464,7 @@ def put_profile(
 
 @app.post("/waitlist", dependencies=[Depends(require_token)])
 def join_waitlist(
-    body: dict[str, Any], session: Session = Depends(get_session), device: str = Depends(get_device_id),
+    body: dict[str, Any], session: Session = Depends(get_session), device: str = Depends(get_identity),
 ) -> dict[str, Any]:
     email = (body.get("email") or "").strip().lower()
     if "@" not in email or "." not in email or len(email) > 254:

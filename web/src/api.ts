@@ -26,9 +26,25 @@ function deviceId(): string {
   }
 }
 
+// Auth token for a logged-in account (saves follow the person across devices).
+const TOKEN_KEY = "pulse.token";
+export const auth = {
+  get(): string | null {
+    try { return localStorage.getItem(TOKEN_KEY); } catch { return null; }
+  },
+  set(token: string) {
+    try { localStorage.setItem(TOKEN_KEY, token); } catch { /* storage blocked */ }
+  },
+  clear() {
+    try { localStorage.removeItem(TOKEN_KEY); } catch { /* storage blocked */ }
+  },
+};
+
 function headers(): HeadersInit {
   const h: Record<string, string> = { "Content-Type": "application/json", "X-Device-Id": deviceId() };
   if (TOKEN) h["X-Pulse-Token"] = TOKEN;
+  const t = auth.get();
+  if (t) h["Authorization"] = `Bearer ${t}`;
   return h;
 }
 
@@ -94,6 +110,26 @@ export const api = {
 
   async saved(): Promise<{ saved_ids: string[]; events: PulseEvent[] }> {
     return req("/saved");
+  },
+
+  // ---- basic auth (email + password) ----
+  async signup(email: string, password: string): Promise<{ token: string; email: string }> {
+    const r = await req<{ token: string; email: string }>("/auth/signup", { method: "POST", body: JSON.stringify({ email, password }) });
+    auth.set(r.token);
+    return r;
+  },
+  async login(email: string, password: string): Promise<{ token: string; email: string }> {
+    const r = await req<{ token: string; email: string }>("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
+    auth.set(r.token);
+    return r;
+  },
+  async logout(): Promise<void> {
+    await req("/auth/logout", { method: "POST" }).catch(() => {});
+    auth.clear();
+  },
+  async me(): Promise<{ email: string | null }> {
+    if (!auth.get()) return { email: null };
+    return req<{ email: string | null }>("/auth/me").catch(() => ({ email: null }));
   },
 
   // Adaptive deep search: live keyword results for q in a city (FIFA, watch
