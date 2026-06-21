@@ -8,6 +8,7 @@ cleanup() — read pending raw_events → parse → normalize → geocode → de
 """
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from typing import Any
 
@@ -68,6 +69,8 @@ def ingest(
             pass
 
     counts: dict[str, int] = {}
+    # Resolve the active sources and ensure a SourceRow per source (fast, local).
+    srcs: list[tuple[Any, SourceRow]] = []
     for src in list(active_sources(session)) + dynamic:
         if getattr(src, "type", "") == "discovery":
             continue  # already ran above
@@ -80,11 +83,27 @@ def ingest(
             session.add(row)
             session.commit()
             session.refresh(row)
+        srcs.append((src, row))
+
+    # Fetch every source CONCURRENTLY — they're independent network calls, so a
+    # cold city (a dozen Eventbrite category pages) loads in a few seconds instead
+    # of tens. Only the I/O fans out into threads; all DB writes stay on this one
+    # (a Session isn't thread-safe), so nothing here touches `session`.
+    def _fetch(src: Any) -> list:
         try:
-            payloads = src.fetch(city, window_days, lat, lng)
+            return list(src.fetch(city, window_days, lat, lng))[: getattr(src, "max_results", 200)]
         except Exception:
-            payloads = []  # ELT: a dead source never breaks ingest
-        payloads = payloads[: getattr(src, "max_results", 200)]  # per-source cap
+            return []  # ELT: a dead source never breaks ingest
+
+    payloads_by_idx: dict[int, list] = {}
+    if srcs:
+        with ThreadPoolExecutor(max_workers=min(12, len(srcs))) as pool:
+            futures = {pool.submit(_fetch, src): i for i, (src, _row) in enumerate(srcs)}
+            for fut, i in futures.items():
+                payloads_by_idx[i] = fut.result()
+
+    for i, (src, row) in enumerate(srcs):
+        payloads = payloads_by_idx.get(i, [])  # per-source cap already applied in _fetch
         for p in payloads:
             session.add(
                 RawEvent(source_id=row.id, raw_url=p.raw_url, raw_payload=p.payload, parse_status="pending")
